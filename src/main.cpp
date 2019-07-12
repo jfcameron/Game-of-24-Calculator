@@ -32,15 +32,14 @@ using input_collection_type = std::vector<input_type>;
 
 /// \brief returns the set of solutions for Shusen's game for the given input set
 ///
-/// \warn the output does not respect BEDMAS; order of operations is simply left to right.
-///
-std::vector<std::string> calculateSolutions(input_collection_type &&input)
+std::vector<std::string> calculateSolutions(const input_type targetNumber, input_collection_type &&input)
 {
-    static constexpr input_type TARGET_NUMBER(24); // <! the value an expression must be equal to for it to be considered a solution.
-    
+    //
+    // Handle trivial cases
+    //
     if (input.size() == 1)
     {
-        if (input.front() == TARGET_NUMBER) return {std::to_string(input.front() == TARGET_NUMBER)}; 
+        if (input.front() == targetNumber) return {std::to_string(input.front() == targetNumber)}; 
         else return {};
     }
 
@@ -72,8 +71,8 @@ std::vector<std::string> calculateSolutions(input_collection_type &&input)
     };
     
     //
-    // 1. Generate list of all possible configurations of operations 
-    //  
+    // 1. Generate list of all possible operation configurations for an input of the given length
+    //
     std::vector<std::vector<Operation>> operation_permutations;
 
     const auto NUMBER_OF_OPERATIONS_IN_EXPRESSION(input.size() - 1);
@@ -104,9 +103,9 @@ std::vector<std::string> calculateSolutions(input_collection_type &&input)
 
         operation_permutations.push_back(current_operations_permutation);
     }
-   
+    
     //
-    // 1.b hmm
+    // 2. Generate a list of all possible order of operations given the length of this input
     //
     const std::vector<std::vector<int>> order_of_operation_permutations = [&NUMBER_OF_OPERATIONS_IN_EXPRESSION]()
     {
@@ -129,65 +128,23 @@ std::vector<std::string> calculateSolutions(input_collection_type &&input)
         return buffer;
     }();
 
-    /*for (auto &current_order_of_operations : order_of_operation_permutations)
-    {
-        std::stringstream ss;
-
-        for (auto blar : current_order_of_operations) ss << blar << " ";
-
-        std::cout << ss.str() << std::endl;
-    }*/
-
-    //operation_order_permutations.reserve(NUMBER_OF_OPERATIONS_IN_EXPRESSION);
-
     //
-    // 2. Apply all operation configurations to all permutations of the input set. Record those expressions which equal TARGET_VALUE to the solutions array.
+    // 3. Apply all operation configurations to all permutations of the input set. Record those expressions which equal TARGET_VALUE to the solutions array.
     //
     std::vector<std::string> solutions;
 
     std::sort(input.begin(), input.end()); // Initial sort must be done in order to guarantee we visit all permutations of input using std::next_permutation in the below loop.
 
-    do // For all number permutations
+    do
     {
         const auto s(input.size());
         
-        for (const auto &operations : operation_permutations) // for all operation perms
+        for (const auto &operations : operation_permutations) //TODO: consider replacing this for with a dowhile, to prevent recording perumations above
         {
-//            input_type buffer = *input.begin();
-//
-//            for (decltype(input.size()) i(1), j(0); i < s; ++i, ++j)
-//            {
-//                switch(operations[j])
-//                {
-//                    case Operation::Addition: buffer += input[i]; break;
-//                    case Operation::Subtraction: buffer -= input[i]; break;
-//                    case Operation::Multiplication: buffer *= input[i]; break;
-//                    case Operation::Division: buffer /= input[i]; break;
-//
-//                    default: throw std::runtime_error("invalid operation!");
-//                }
-//            }
-//
-//            if (/*std::abs*/(buffer) == TARGET_NUMBER)  // I was wrong. must be positive 24
-//            {
-//                std::stringstream ss;
-//                
-//                for (decltype(input.size()) i(0); i < s - 1; ++i)
-//                {  
-//                    ss << input[i] << operationToString(operations[i]);
-//                }
-//
-//                ss << input.back() << " = " << buffer;
-//
-//                solutions.push_back(ss.str());
-//            }
-
             for (auto &current_order_of_operations : order_of_operation_permutations) // for all orders
             {
                 static constexpr auto applyOperation = [](input_type l, const input_type r, const Operation o)
                 {
-                    //std::cout << l << operationToString(o) << r << std::endl;
-                    
                     switch(o)
                     {
                         case Operation::Addition:       l += r; break;
@@ -207,94 +164,69 @@ std::vector<std::string> calculateSolutions(input_collection_type &&input)
                     
                     return l;
                 };
-
-                /*if (true
-                    && input[0] == 5
-                    && input[1] == 5
-                    && input[2] == 1
-                    && input[3] == 5
-                    && operations[0] == Operation::Division
-                    && operations[1] == Operation::Subtraction
-                    && operations[2] == Operation::Multiplication
-                    && current_order_of_operations[0] == 2
-                    && current_order_of_operations[1] == 1
-                    && current_order_of_operations[2] == 0) */
+                
+                auto input_copy = input;
+                
                 {
-                    //construct the braced structure
-                    //evaluate the structure
+                    decltype(input.size()) i(0); 
                     
-                    auto input_copy = input;
-                    
-                    //int output;
+                    input_type buffer;
 
+                    std::stringstream ss;
+
+                    int deletionOffset = 0;
+                    
+                    do
                     {
-                        decltype(input.size()) i(0); 
+                        auto order = current_order_of_operations[i] - deletionOffset;
                         
-                        input_type buffer;
-                    
-                        //std::set<int> used;
-
-                        std::stringstream ss;
-
-                        int deletionOffset = 0;
+                        if (order < 0) order = 0;
+                        if (order >= input_copy.size() -1) order = input_copy.size() - 1;
                         
-                        do
-                        {
-                            //std::cout << ""; for (const auto a : input_copy) std::cout << a << ", "; std::cout << "\n";
+                        ss << input_copy[order] << operationToString(operations[i]) << input_copy[order + 1] << ": ";
 
-                            auto order = current_order_of_operations[i] - deletionOffset;
-                            
-                            if (order < 0) order = 0;
-                            if (order >= input_copy.size() -1) order = input_copy.size() - 1;
-                            
-                            ss << input_copy[order] << operationToString(operations[i]) << input_copy[order + 1] << ": ";
+                        buffer = applyOperation(input_copy[order], input_copy[order + 1], operations[i]);
 
-                            buffer = applyOperation(input_copy[order], input_copy[order + 1], operations[i]);
+                        input_copy[order] = buffer;
 
-                            input_copy[order] = buffer;
+                        input_copy.erase(input_copy.begin() + order + 1);
 
-                            input_copy.erase(input_copy.begin() + order + 1);
+                        for (auto a : input_copy) ss << a << ", "; ss << "\n";
 
-                            for (auto a : input_copy) ss << a << ", "; ss << "\n";
-
-                            deletionOffset++;
-                            
-                            ++i;
-                            
-                        }
-                        while(i < operations.size());
-
-                        //std::cout << ""; for (const auto a : input_copy) std::cout << a << ", "; std::cout << "\n";
-
-                        if (/*buffer*/ input_copy.front() == 24)
-                        {
-                            for (const auto a : input) std::cout << a << ", "; std::cout << "\n";
-                            //for (const auto a : input_copy) std::cout << a << ", "; std::cout << "\n==\n";
-                            std::cout << ss.str() <<  "result: " << buffer << "\n======\n";
-
-                            solutions.push_back("blimblam");
-                        }
-
-
-                        //output = buffer;
+                        deletionOffset++;
+                        
+                        ++i;
+                        
                     }
+                    while(i < operations.size());
 
-                    //for (decltype(input.size()) i(1); i < s - 1; ++i)
-                    
-                    //yes!
-                    /*if (buffer == TARGET_NUMBER)
+                    //std::cout << ""; for (const auto a : input_copy) std::cout << a << ", "; std::cout << "\n";
+
+                    if (/*buffer*/ input_copy.front() == 24)
                     {
-                        solutions.push_back("zipzap");
+                        for (const auto a : input) std::cout << a << ", "; std::cout << "\n";
+                        //for (const auto a : input_copy) std::cout << a << ", "; std::cout << "\n==\n";
+                        std::cout << ss.str() <<  "result: " << buffer << "\n======\n";
 
-                        std::stringstream ss;
-
-                        ss << "input: "; for (const auto &i : input) ss << i << ", "; ss << "\n"; 
-                        ss << "operations: "; for (const auto &i : operations) ss << operationToString(i) << ", "; ss << "\n";
-                        ss << "order of operations: "; for (const auto &i : current_order_of_operations) ss << i << ", "; ss << "\n";
-
-                        std::cout << ss.str();
-                    }*/
+                        solutions.push_back("blimblam");
+                    }
                 }
+
+                //for (decltype(input.size()) i(1); i < s - 1; ++i)
+                
+                //yes!
+                /*if (buffer == targetNumber)
+                {
+                    solutions.push_back("zipzap");
+
+                    std::stringstream ss;
+
+                    ss << "input: "; for (const auto &i : input) ss << i << ", "; ss << "\n"; 
+                    ss << "operations: "; for (const auto &i : operations) ss << operationToString(i) << ", "; ss << "\n";
+                    ss << "order of operations: "; for (const auto &i : current_order_of_operations) ss << i << ", "; ss << "\n";
+
+                    std::cout << ss.str();
+                }*/
             }
         }
     } 
@@ -312,7 +244,7 @@ int main(int argc, char **argv)
 {
     if (argc <= 1)
     {
-        std::cout << *argv << "-=- requires at least one number to work with!\n";
+        std::cout << *argv << "-=- requires at least one number to work with! -=-\n";
 
         return EXIT_FAILURE;
     }
@@ -322,7 +254,7 @@ int main(int argc, char **argv)
 
         const auto start_time(std::chrono::steady_clock::now());
         
-        auto solutions = calculateSolutions([&parameters]()
+        auto solutions = calculateSolutions(24, [&parameters]()
         {
             input_collection_type input;
 
