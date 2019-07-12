@@ -36,9 +36,10 @@ using input_collection_type = std::vector<input_type>;
 std::vector<std::string> calculateSolutions(const input_type targetNumber, input_collection_type &&input)
 {
     //
-    // Handle trivial cases
+    // 0. Handle trivial cases
     //
-    if (input.size() == 1)
+    if (!input.size()) return {};
+    else if (input.size() == 1)
     {
         if (input.front() == targetNumber) return {std::to_string(input.front() == targetNumber)}; 
         else return {};
@@ -65,50 +66,55 @@ std::vector<std::string> calculateSolutions(const input_type targetNumber, input
             case Operation::Multiplication: output = "*"; break;
             case Operation::Division: output = "/"; break;
 
-            default: throw std::runtime_error("operationToString: invalid operation type!"); break;
+            default: throw std::runtime_error("operationToString: invalid operation type!");
         }
 
         return output;
     };
     
+    const auto NUMBER_OF_OPERATIONS_IN_EXPRESSION(input.size() - 1);
+
     //
     // 1. Generate list of all possible operation configurations for an input of the given length
     //
-    std::vector<std::vector<Operation>> operation_permutations;
-
-    const auto NUMBER_OF_OPERATIONS_IN_EXPRESSION(input.size() - 1);
-
-    for (decltype(input.size()) i(0), s(static_cast<decltype(s)>(std::pow(Operation_Count, NUMBER_OF_OPERATIONS_IN_EXPRESSION))); i < s; ++i)
+    const std::vector<std::vector<Operation>> operation_permutations = [&NUMBER_OF_OPERATIONS_IN_EXPRESSION]()
     {
-        auto decimalValueBuffer = i;
+        std::remove_const<decltype(operation_permutations)>::type buffer;
 
-        decltype(operation_permutations)::value_type current_operations_permutation(NUMBER_OF_OPERATIONS_IN_EXPRESSION);
-
-        for (decltype(i) j(0); decimalValueBuffer != 0; ++j)
+        for (decltype(input.size()) i(0), s(static_cast<decltype(s)>(std::pow(Operation_Count, NUMBER_OF_OPERATIONS_IN_EXPRESSION))); i < s; ++i)
         {
-            const decltype(i) digit = decimalValueBuffer % Operation_Count;
+            auto decimalValueBuffer = i;
 
-            if (digit < 0 || digit > Operation_Count - 1) throw std::runtime_error([digit, i]()
+            decltype(buffer)::value_type current_operations_permutation(NUMBER_OF_OPERATIONS_IN_EXPRESSION);
+
+            for (decltype(i) j(0); decimalValueBuffer != 0; ++j)
             {
-                std::stringstream ss;
+                const decltype(i) digit = decimalValueBuffer % Operation_Count;
 
-                ss << "error: failed to convert decimal digit: " << i << " to base " << Operation_Count << " digit: " << digit;
+                if (digit < 0 || digit > Operation_Count - 1) throw std::runtime_error([digit, i]()
+                {
+                    std::stringstream ss;
 
-                return ss.str();
-            }());
+                    ss << "error: failed to convert decimal digit: " << i << " to base " << Operation_Count << " digit: " << digit;
 
-            current_operations_permutation[j] = static_cast<Operation>(digit);
+                    return ss.str();
+                }());
 
-            decimalValueBuffer /= Operation_Count;                
+                current_operations_permutation[j] = static_cast<Operation>(digit);
+
+                decimalValueBuffer /= Operation_Count;                
+            }
+
+            buffer.push_back(current_operations_permutation);
         }
 
-        operation_permutations.push_back(current_operations_permutation);
-    }
+        return buffer;
+    }();
     
     //
     // 2. Generate a list of all possible order of operations given the length of this input
     //
-    const std::vector<std::vector<int>> order_of_operation_permutations = [&NUMBER_OF_OPERATIONS_IN_EXPRESSION]() //TODO: naked int here
+    const std::vector<std::vector<int>> order_of_operation_permutations = [&NUMBER_OF_OPERATIONS_IN_EXPRESSION]() //TODO: naked int here. think about not creating this vector, instead do nested std::next_perm while loop below. (seriously, why write this to heap only ot iterate with no changes? What is the value? More ram usage?)
     {
         std::remove_const<decltype(order_of_operation_permutations)>::type buffer;
 
@@ -130,7 +136,8 @@ std::vector<std::string> calculateSolutions(const input_type targetNumber, input
     }();
 
     //
-    // 3. Apply all operation configurations to all permutations of the input set. Record those expressions which equal TARGET_VALUE to the solutions array.
+    // 3. Apply all operation configurations to all orders of operations to all permutations of the input set. 
+    // Record those expressions which equal TARGET_VALUE to the solutions array.
     //
     std::vector<std::string> solutions;
 
@@ -144,7 +151,7 @@ std::vector<std::string> calculateSolutions(const input_type targetNumber, input
         {
             for (auto &current_order_of_operations : order_of_operation_permutations)
             {
-                static constexpr auto applyOperation = [](input_type l, const input_type r, const Operation o)
+                static constexpr auto applyOperation = [](input_type l, const input_type r, const Operation o) // TODO: the exceptional case is weird. error message is weird. using the value copy of l as the rv buffer is weird
                 {
                     switch(o)
                     {
@@ -166,6 +173,7 @@ std::vector<std::string> calculateSolutions(const input_type targetNumber, input
                     return l;
                 };
                 
+                // TODO: think about the remainder of this brace. This is the most recently added code. expect issues.
                 auto input_copy = input;
                 
                 {
@@ -182,7 +190,7 @@ std::vector<std::string> calculateSolutions(const input_type targetNumber, input
                         auto order = current_order_of_operations[i] - deletionOffset;
                         
                         if (order < 0) order = 0;
-                        if (order >= input_copy.size() -1) order = input_copy.size() - 1;
+                        else if (order >= input_copy.size() -1) order = input_copy.size() - 1;
                         
                         ss << input_copy[order] << operationToString(operations[i]) << input_copy[order + 1] << ": ";
 
@@ -243,63 +251,54 @@ std::vector<std::string> calculateSolutions(const input_type targetNumber, input
 ///
 int main(int argc, char **argv)
 {
-    if (argc <= 1)
-    {
-        std::cout << *argv << "-=- requires at least one number to work with! -=-\n";
+    const std::vector parameters(argv + 1, argv + argc);
 
-        return EXIT_FAILURE;
-    }
-    else
-    {
-        const std::vector parameters(argv + 1, argv + argc);
-
-        const auto start_time(std::chrono::steady_clock::now());
-        
-        auto solutions = calculateSolutions(24, [&parameters]()
-        {
-            input_collection_type input;
-
-            input.reserve(parameters.size());
-
-            for (const auto &param : parameters) input.push_back(std::stod(param));
-
-            return input;
-        }()); 
-
-        const auto end_time(std::chrono::steady_clock::now());
-
-        const auto size = solutions.size(); 
+    const auto start_time(std::chrono::steady_clock::now());
     
-        //for (auto solution : solutions) std::cout << solution << std::endl;
+    auto solutions = calculateSolutions(24, [&parameters]()
+    {
+        input_collection_type input;
+
+        input.reserve(parameters.size());
+
+        for (const auto &param : parameters) input.push_back(std::stod(param));
+
+        return input;
+    }()); 
+
+    const auto end_time(std::chrono::steady_clock::now());
+
+    const auto size = solutions.size(); 
+
+    //for (auto solution : solutions) std::cout << solution << std::endl;
+    
+    std::cout << "-=- " << (!size ? "No solution" : [&size]()
+    { 
+        std::stringstream ss; 
+
+        ss << size << " solution" << (size > 1 ? "s" : "");
+
+        return ss.str();
+    }())
+    << ", time taken " << [&end_time, &start_time]()
+    {
+        std::stringstream ss;
         
-        std::cout << "-=- " << (!size ? "No solution" : [&size]()
-        { 
-            std::stringstream ss; 
-
-            ss << size << " solution" << (size > 1 ? "s" : "");
-
-            return ss.str();
-        }())
-        << ", time taken " << [&end_time, &start_time]()
+        auto buffer = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
+        
+        if (buffer) ss << "(miliseconds): ";
+        else if ((buffer = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count())) ss << "(microseconds): ";
+        else
         {
-            std::stringstream ss;
-            
-            auto buffer = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
-            
-            if (buffer) ss << "(miliseconds): ";
-            else if ((buffer = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count())) ss << "(microseconds): ";
-            else
-            {
-                ss << "(nanoseconds): ";
-                buffer = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-            }
-            
-            ss << buffer;
-            
-            return ss.str();
-        }()
-        << " -=-" << std::endl;
-    }
+            ss << "(nanoseconds): ";
+            buffer = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+        }
+        
+        ss << buffer;
+        
+        return ss.str();
+    }()
+    << " -=-" << std::endl;
 
     return EXIT_SUCCESS;
 }
