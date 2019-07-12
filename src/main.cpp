@@ -14,9 +14,10 @@
 /// How the calculator works:
 ///   1) a list of all possible permutations of operations for the given set of numbers is generated. 
 ///      e.g: given {1, 2, 5}, the list would be: {{+, +, +}, {+, +, -}, {+, +, *}, {+, +, /}, ..., {/, /, /}}.
-///   2) each possible permutations of operations is then applied to each permutation of the input set. If the resulting expression is equal to 24 or -24, 
-///      that expression is added to the set of solutions, otherwise it is discarded.
-///   3) each solution is then displayed, along with the number of solutions and the amount of time it took the machine to calculate them.
+///   2) a list of all possible orders of operation is generated ("braces")
+///   3) each possible permutations of operations is applied to every order of operations is applied to each permutation of the input set. 
+///      If the resulting expression is equal to 24, that expression is added to the set of solutions, otherwise it is discarded.
+///   4) each solution is then displayed, along with the number of solutions and the amount of time it took the machine to calculate them.
 ///
 #include <algorithm>
 #include <chrono>
