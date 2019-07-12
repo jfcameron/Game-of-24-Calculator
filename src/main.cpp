@@ -108,17 +108,17 @@ std::vector<std::string> calculateSolutions(const input_type targetNumber, input
     //
     // 2. Generate a list of all possible order of operations given the length of this input
     //
-    const std::vector<std::vector<int>> order_of_operation_permutations = [&NUMBER_OF_OPERATIONS_IN_EXPRESSION]()
+    const std::vector<std::vector<int>> order_of_operation_permutations = [&NUMBER_OF_OPERATIONS_IN_EXPRESSION]() //TODO: naked int here
     {
         std::remove_const<decltype(order_of_operation_permutations)>::type buffer;
 
-        std::vector<int> current_order_of_operations;
+        decltype(order_of_operation_permutations)::value_type current_order_of_operations;
 
         current_order_of_operations.reserve(NUMBER_OF_OPERATIONS_IN_EXPRESSION);
 
         for (std::remove_const<decltype(NUMBER_OF_OPERATIONS_IN_EXPRESSION)>::type i = 0; i < NUMBER_OF_OPERATIONS_IN_EXPRESSION; ++i) current_order_of_operations.push_back(i);
 
-        std::sort(current_order_of_operations.begin(), current_order_of_operations.end());
+        std::sort(current_order_of_operations.begin(), current_order_of_operations.end()); //std::next_permutation requires sorted data
 
         do
         {
