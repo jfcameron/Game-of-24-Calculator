@@ -15,7 +15,7 @@
 ///   1) a list of all possible permutations of operations for the given set of numbers is generated. 
 ///      e.g: given {1, 2, 5}, the list would be: {{+, +, +}, {+, +, -}, {+, +, *}, {+, +, /}, ..., {/, /, /}}.
 ///   2) a list of all possible orders of operation is generated ("braces")
-///   3) each possible permutations of operations is applied to every order of operations is applied to each permutation of the input set. 
+///   3) each possible permutations of operations is applied to every order of operations, applied to each permutation of the input set. 
 ///      If the resulting expression is equal to 24, that expression is added to the set of solutions, otherwise it is discarded.
 ///   4) each solution is then displayed, along with the number of solutions and the amount of time it took the machine to calculate them.
 ///
@@ -134,7 +134,7 @@ std::vector<std::string> calculateSolutions(const input_type targetNumber, input
     //
     std::vector<std::string> solutions;
 
-    std::sort(input.begin(), input.end()); // Initial sort must be done in order to guarantee we visit all permutations of input using std::next_permutation in the below loop.
+    std::sort(input.begin(), input.end()); //std::next_permutation requires sorted data
 
     do
     {
@@ -142,7 +142,7 @@ std::vector<std::string> calculateSolutions(const input_type targetNumber, input
         
         for (const auto &operations : operation_permutations) //TODO: consider replacing this for with a dowhile, to prevent recording perumations above
         {
-            for (auto &current_order_of_operations : order_of_operation_permutations) // for all orders
+            for (auto &current_order_of_operations : order_of_operation_permutations)
             {
                 static constexpr auto applyOperation = [](input_type l, const input_type r, const Operation o)
                 {
