@@ -8,7 +8,7 @@
 ///  operations can be used any number of times and in any order.
 ///
 /// The rules have been extended so that:
-///     the target number "24" can be substituted for any othe real number.
+///     the target number "24" can be substituted for any other real number.
 ///     the user can be given any number of floating point numbers, they are not limited to 4
 ///
 /// How the calculator works:
