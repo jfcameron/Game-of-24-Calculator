@@ -17,7 +17,7 @@ input.onkeydown = (aKey) =>
             
         for (var i = args.length - 1; i--;)
         {
-            if ( args[i] === "") args.splice(i, 1);
+            if ( args[i] === "" || args[i] == ".") args.splice(i, 1);
         }
 
         if (args.length > MAX_LENGTH) 
@@ -33,9 +33,7 @@ input.onkeydown = (aKey) =>
                 if (i === "") args = args.splice
             });*/
 
-
-            console.log(args);
-            //Module.callMain(args);
+            Module.callMain(args);
         }
     }
 };
