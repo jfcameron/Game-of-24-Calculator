@@ -41,7 +41,7 @@ std::vector<std::string> calculateSolutions(const input_type targetNumber, input
     if (!input.size()) return {};
     else if (input.size() == 1)
     {
-        if (input.front() == targetNumber) return {std::to_string(input.front() == targetNumber)}; 
+        if (const auto front = input.front(); front == targetNumber) return {std::string("{") + std::to_string(front) + "}\n"}; 
         else return {};
     }
 
@@ -55,7 +55,7 @@ std::vector<std::string> calculateSolutions(const input_type targetNumber, input
     
     static constexpr decltype(input.size()) Operation_Count(4); // <! must be equal to the number of elements in Operation enum
 
-    static constexpr auto operationToString = [](const Operation o)
+    static constexpr auto Operation_ToString = [](const Operation o)
     {
         std::string output;
 
@@ -66,10 +66,39 @@ std::vector<std::string> calculateSolutions(const input_type targetNumber, input
             case Operation::Multiplication: output = "*"; break;
             case Operation::Division: output = "/"; break;
 
-            default: throw std::runtime_error("operationToString: invalid operation type!");
+            default: throw std::runtime_error([&]()
+            {
+                std::stringstream ss;
+                
+                ss << "Operation_ToString: invalid operation: " << static_cast<unsigned int>(o) << std::endl;
+
+                return ss.str();
+            }());
         }
 
         return output;
+    };
+
+    static constexpr auto Operation_PerformOperation = [](input_type l, const input_type r, const Operation o)     
+    {
+        switch(o)
+        {
+            case Operation::Addition: l += r; break;
+            case Operation::Subtraction: l -= r; break;
+            case Operation::Multiplication: l *= r; break;
+            case Operation::Division: l /= r; break;
+
+            default: throw std::runtime_error([&]()
+            {
+                std::stringstream ss;
+                
+                ss << "Operation_PerformOperation: invalid operation: " << static_cast<unsigned int>(o) << std::endl;
+
+                return ss.str();
+            }());
+        }
+        
+        return l;
     };
     
     const auto NUMBER_OF_OPERATIONS_IN_EXPRESSION(input.size() - 1);
@@ -114,7 +143,7 @@ std::vector<std::string> calculateSolutions(const input_type targetNumber, input
     //
     // 2. Generate a list of all possible order of operations given the length of this input
     //
-    const std::vector<std::vector<int>> order_of_operation_permutations = [&NUMBER_OF_OPERATIONS_IN_EXPRESSION]() //TODO: naked int here. think about not creating this vector, instead do nested std::next_perm while loop below. (seriously, why write this to heap only ot iterate with no changes? What is the value? More ram usage?)
+    const std::vector<std::vector<int>> order_of_operation_permutations = [&NUMBER_OF_OPERATIONS_IN_EXPRESSION]() //TODO: why int
     {
         std::remove_const<decltype(order_of_operation_permutations)>::type buffer;
 
@@ -122,7 +151,10 @@ std::vector<std::string> calculateSolutions(const input_type targetNumber, input
 
         current_order_of_operations.reserve(NUMBER_OF_OPERATIONS_IN_EXPRESSION);
 
-        for (std::remove_const<decltype(NUMBER_OF_OPERATIONS_IN_EXPRESSION)>::type i = 0; i < NUMBER_OF_OPERATIONS_IN_EXPRESSION; ++i) current_order_of_operations.push_back(i);
+        for (std::remove_const<decltype(NUMBER_OF_OPERATIONS_IN_EXPRESSION)>::type i = 0; i < NUMBER_OF_OPERATIONS_IN_EXPRESSION; ++i) 
+        {
+            current_order_of_operations.push_back(i);
+        }
 
         std::sort(current_order_of_operations.begin(), current_order_of_operations.end()); //std::next_permutation requires sorted data
 
@@ -137,7 +169,7 @@ std::vector<std::string> calculateSolutions(const input_type targetNumber, input
 
     //
     // 3. Apply all operation configurations to all orders of operations to all permutations of the input set. 
-    // Record those expressions which equal TARGET_VALUE to the solutions array.
+    // Record those expressions which equal targetNumber to the solutions array.
     //
     std::vector<std::string> solutions;
 
@@ -147,95 +179,73 @@ std::vector<std::string> calculateSolutions(const input_type targetNumber, input
     {
         const auto s(input.size());
         
-        for (const auto &operations : operation_permutations) //TODO: consider replacing this for with a dowhile, to prevent recording perumations above
+        for (const auto &operations : operation_permutations)
         {
             for (auto &current_order_of_operations : order_of_operation_permutations)
             {
-                static constexpr auto applyOperation = [](input_type l, const input_type r, const Operation o) // TODO: the exceptional case is weird. error message is weird. using the value copy of l as the rv buffer is weird
-                {
-                    switch(o)
-                    {
-                        case Operation::Addition:       l += r; break;
-                        case Operation::Subtraction:    l -= r; break;
-                        case Operation::Multiplication: l *= r; break;
-                        case Operation::Division:       l /= r; break;
-
-                        default: throw std::runtime_error([&]()
-                        {
-                            std::stringstream ss;
-                            
-                            ss << "invalid operation: " << static_cast<unsigned int>(o) << ", l: " << l << ", r: " << r << std::endl;
-
-                            return ss.str();
-                        }());
-                    }
-                    
-                    return l;
-                };
-                
-                // TODO: think about the remainder of this brace. This is the most recently added code. expect issues.
                 auto input_copy = input;
+
+                decltype(input.size()) i(0); 
                 
+                input_type buffer;
+
+                std::stringstream ss;
+
+                std::vector<std::pair<std::tuple<int, Operation, int>, std::vector<int>>> blar;
+
+                std::make_signed<decltype(input_copy.size())>::type deletionOffset = 0;
+                
+                do
                 {
-                    decltype(input.size()) i(0); 
+                    auto order = current_order_of_operations[i] - deletionOffset;
                     
-                    input_type buffer;
-
-                    std::stringstream ss;
-
-                    int deletionOffset = 0;
+                    if (order < 0) order = 0;
+                    else if (order >= input_copy.size() - 1) order = input_copy.size() - 1;
                     
-                    do
+                    ss << input_copy[order] << Operation_ToString(operations[i]) << input_copy[order + 1] << ": ";
+
+                    buffer = Operation_PerformOperation(input_copy[order], input_copy[order + 1], operations[i]);
+
+                    input_copy[order] = buffer;
+
+                    input_copy.erase(input_copy.begin() + order + 1);
+
+                    ss << "{";
+                    
+                    for (decltype(input_copy.size()) i = 0; i < input_copy.size(); ++i)
                     {
-                        auto order = current_order_of_operations[i] - deletionOffset;
+                        ss << input_copy[i]; 
                         
-                        if (order < 0) order = 0;
-                        else if (order >= input_copy.size() -1) order = input_copy.size() - 1;
-                        
-                        ss << input_copy[order] << operationToString(operations[i]) << input_copy[order + 1] << ": ";
-
-                        buffer = applyOperation(input_copy[order], input_copy[order + 1], operations[i]);
-
-                        input_copy[order] = buffer;
-
-                        input_copy.erase(input_copy.begin() + order + 1);
-
-                        for (auto a : input_copy) ss << a << ", "; ss << "\n";
-
-                        deletionOffset++;
-                        
-                        ++i;
-                        
+                        if (i != input_copy.size() - 1) ss << ", "; 
                     }
-                    while(i < operations.size());
 
-                    //std::cout << ""; for (const auto a : input_copy) std::cout << a << ", "; std::cout << "\n";
+                    ss << "}\n";
 
-                    if (/*buffer*/ input_copy.front() == 24)
-                    {
-                        for (const auto a : input) std::cout << a << ", "; std::cout << "\n";
-                        //for (const auto a : input_copy) std::cout << a << ", "; std::cout << "\n==\n";
-                        std::cout << ss.str() <<  "result: " << buffer << "\n======\n";
-
-                        solutions.push_back("blimblam");
-                    }
+                    deletionOffset++;
+                    
+                    ++i;
                 }
+                while(i < operations.size());
 
-                //for (decltype(input.size()) i(1); i < s - 1; ++i)
-                
-                //yes!
-                /*if (buffer == targetNumber)
+                if (input_copy.front() == targetNumber)
                 {
-                    solutions.push_back("zipzap");
+                    std::stringstream ssOutput;
 
-                    std::stringstream ss;
+                    ssOutput << "{";
 
-                    ss << "input: "; for (const auto &i : input) ss << i << ", "; ss << "\n"; 
-                    ss << "operations: "; for (const auto &i : operations) ss << operationToString(i) << ", "; ss << "\n";
-                    ss << "order of operations: "; for (const auto &i : current_order_of_operations) ss << i << ", "; ss << "\n";
+                    const decltype(input.size()) s = input.size();
+                    
+                    for (decltype(input.size()) i = 0; i < s; ++i)
+                    {
+                        ssOutput << input[i];
 
-                    std::cout << ss.str();
-                }*/
+                        if (i != s - 1) ssOutput << ", "; 
+                    }
+                    
+                    ssOutput << "}\n" << ss.str();
+
+                    solutions.push_back(ssOutput.str());
+                }
             }
         }
     } 
@@ -251,7 +261,7 @@ std::vector<std::string> calculateSolutions(const input_type targetNumber, input
 ///
 int main(int argc, char **argv)
 {
-    const std::vector parameters(argv + 1, argv + argc);
+    const std::vector<std::string> parameters(argv + 1, argv + argc);
 
     const auto start_time(std::chrono::steady_clock::now());
     
@@ -270,9 +280,9 @@ int main(int argc, char **argv)
 
     const auto size = solutions.size(); 
 
-    //for (auto solution : solutions) std::cout << solution << std::endl;
+    for (auto solution : solutions) std::cout << solution << "==========" << std::endl;
     
-    std::cout << "-=- " << (!size ? "No solution" : [&size]()
+    std::cout << (!size ? "No solution" : [&size]()
     { 
         std::stringstream ss; 
 
@@ -286,20 +296,25 @@ int main(int argc, char **argv)
         
         auto buffer = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
         
-        if (buffer) ss << "(miliseconds): ";
-        else if ((buffer = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count())) ss << "(microseconds): ";
+        if (buffer) ss << "(milliseconds): ";
         else
         {
-            ss << "(nanoseconds): ";
-            buffer = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+            ss << "(microseconds): ";
+            buffer = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
         }
         
         ss << buffer;
         
         return ss.str();
     }()
-    << " -=-" << std::endl;
+    << std::endl;
 
     return EXIT_SUCCESS;
 }
+
+//Module['arguments'] = ["1", "2", "5", "6"]
+//Module.callMain()
+//Module.callMain(["1", "5", "5"])
+//Module.noInitialRun = false
+//    --pre-js "pre-js.js" \
 

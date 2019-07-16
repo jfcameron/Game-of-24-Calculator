@@ -8,5 +8,6 @@ g++ \
     "${SOURCE_ROOT_DIR}"/*.cpp \
     -I"${PUBLIC_HEADER_DIR}" \
     -I"${PRIVATE_HEADER_DIR}" \
-    -std=c++17
+    -std=c++17 \
+    -DBUILD_NATIVE
 
