@@ -5,6 +5,9 @@
 var output = document.getElementById("output");
 var input = document.getElementById("input");
 
+output.value = "Output appears here";
+input.value = "5 5 5 1";
+
 input.onkeydown = (aKey) =>
 {
     if (aKey.key === "Enter")

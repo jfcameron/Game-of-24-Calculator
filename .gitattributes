@@ -1,0 +1,4 @@
+* text=auto
+
+websrc/*/ linguist-vendored
+
