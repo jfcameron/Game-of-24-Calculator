@@ -191,8 +191,6 @@ std::vector<std::string> calculateSolutions(const input_type targetNumber, input
 
                 std::stringstream ss;
 
-                std::vector<std::pair<std::tuple<int, Operation, int>, std::vector<int>>> blar;
-
                 std::make_signed<decltype(input_copy.size())>::type deletionOffset = 0;
                 
                 do
