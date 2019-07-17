@@ -23,7 +23,6 @@
 #include <chrono>
 #include <cmath>
 #include <iostream>
-#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -321,13 +320,17 @@ int main(int argc, char **argv)
         }()
         << std::endl;
     }
-    catch (std::runtime_error e)
+    catch (const std::runtime_error &e)
     {
-        std::cerr << "fatal error: " << e.what() << std::endl;
+        std::cerr << "unhandled exception: " << e.what() << std::endl;
     }
-    catch (std::exception)
+    catch (const std::exception &e)
     {
-        std::cerr << "fatal error: please contact the software vendor" << std::endl;
+        std::cerr << "unhandled exception: " << e.what() << std::endl;
+    }
+    catch (...)
+    {
+        std::cerr << "unhandled exception: please contact the software vendor" << std::endl;
     }
 
     return EXIT_SUCCESS;

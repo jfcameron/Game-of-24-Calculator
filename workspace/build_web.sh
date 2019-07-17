@@ -8,6 +8,7 @@ PRIVATE_HEADER_DIR="${SOURCE_ROOT_DIR}/include"
 
 #NOTE: c++1z not 17, https://github.com/emscripten-core/emscripten/issues/5513
 emcc \
+    -O3 \
     "${SOURCE_ROOT_DIR}"/*.cpp \
     -I"${PUBLIC_HEADER_DIR}" \
     -I"${PRIVATE_HEADER_DIR}" \
