@@ -1,7 +1,7 @@
 ## 24 Game Calculator
 
 ### Motivation
-I was introduced to this arithmetic game recently and was inspired to write an algorithim that could solve it generally. I would characterize the code as brute force (calculates all possible expressions for an input and records those that = 24) and naive (First implementation. Does not contain any interesting optimizations. Did not look for previous work on the problem etc)... but it does produce solutions! A live demo can be tried <a href="https://jfcameron.github.io/Game-of-24-Calculator/">here</a>
+I was introduced to this arithmetic game recently and was inspired to write an algorithim that could solve it generally. I would characterize the code as brute force and naive. It calculates all possible expressions for an input and records those that = 24... but it does produce solutions! A live demo can be tried <a href="https://jfcameron.github.io/Game-of-24-Calculator/">here</a>
 
 ### About the code
 "src" directory contains the c++ code, this is the source code for the calculator itself.
