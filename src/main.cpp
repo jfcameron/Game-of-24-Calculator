@@ -70,7 +70,7 @@ std::vector<std::string> calculateSolutions(const input_type targetNumber, input
             {
                 std::stringstream ss;
                 
-                ss << "Operation_ToString: invalid operation: " << static_cast<unsigned int>(o) << std::endl;
+                ss << "Operation_ToString: invalid operation: " << static_cast<std::underlying_type<Operation>::type>(o) << std::endl;
 
                 return ss.str();
             }());
@@ -92,7 +92,7 @@ std::vector<std::string> calculateSolutions(const input_type targetNumber, input
             {
                 std::stringstream ss;
                 
-                ss << "Operation_PerformOperation: invalid operation: " << static_cast<unsigned int>(o) << std::endl;
+                ss << "Operation_PerformOperation: invalid operation: " << static_cast<std::underlying_type<Operation>::type>(o) << std::endl;
 
                 return ss.str();
             }());
@@ -323,7 +323,6 @@ int main(int argc, char **argv)
         }()
         << std::endl;
     }
-    //catch 
     catch (std::runtime_error e)
     {
         std::cerr << "fatal error: " << e.what() << std::endl;
