@@ -261,60 +261,78 @@ std::vector<std::string> calculateSolutions(const input_type targetNumber, input
 ///
 int main(int argc, char **argv)
 {
-    const std::vector<std::string> parameters(argv + 1, argv + argc);
-
-    const auto start_time(std::chrono::steady_clock::now());
-    
-    auto solutions = calculateSolutions(24, [&parameters]()
+    try
     {
-        input_collection_type input;
+        const std::vector<std::string> parameters(argv + 1, argv + argc);
 
-        input.reserve(parameters.size());
-
-        for (const auto &param : parameters) input.push_back(std::stod(param));
-
-        return input;
-    }()); 
-
-    const auto end_time(std::chrono::steady_clock::now());
-
-    const auto size = solutions.size(); 
-
-    for (auto solution : solutions) std::cout << solution << "==========" << std::endl;
-    
-    std::cout << (!size ? "No solution" : [&size]()
-    { 
-        std::stringstream ss; 
-
-        ss << size << " solution" << (size > 1 ? "s" : "");
-
-        return ss.str();
-    }())
-    << ", time taken " << [&end_time, &start_time]()
-    {
-        std::stringstream ss;
+        const auto start_time(std::chrono::steady_clock::now());
         
-        auto buffer = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
-        
-        if (buffer) ss << "(milliseconds): ";
-        else
+        auto solutions = calculateSolutions(24, [&parameters]()
         {
-            ss << "(microseconds): ";
-            buffer = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
-        }
+            input_collection_type input;
+
+            input.reserve(parameters.size());
+
+            for (const auto &param : parameters) 
+            {
+                try
+                {
+                    input.push_back(std::stod(param));
+                }
+                catch (std::invalid_argument)
+                {
+                    std::cerr << "input contains invalid parameter: \"" << param << "\". All inputs must be integer or floating point numbers" << std::endl;
+
+                    return decltype(input)();
+                }
+            }
+
+            return input;
+        }()); 
+
+        const auto end_time(std::chrono::steady_clock::now());
+
+        const auto size = solutions.size(); 
+
+        for (auto solution : solutions) std::cout << solution << "==========" << std::endl;
         
-        ss << buffer;
-        
-        return ss.str();
-    }()
-    << std::endl;
+        std::cout << (!size ? "No solution" : [&size]()
+        { 
+            std::stringstream ss; 
+
+            ss << size << " solution" << (size > 1 ? "s" : "");
+
+            return ss.str();
+        }())
+        << ", time taken " << [&end_time, &start_time]()
+        {
+            std::stringstream ss;
+            
+            auto buffer = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
+            
+            if (buffer) ss << "(milliseconds): ";
+            else
+            {
+                ss << "(microseconds): ";
+                buffer = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+            }
+            
+            ss << buffer;
+            
+            return ss.str();
+        }()
+        << std::endl;
+    }
+    //catch 
+    catch (std::runtime_error e)
+    {
+        std::cerr << "fatal error: " << e.what() << std::endl;
+    }
+    catch (std::exception)
+    {
+        std::cerr << "fatal error: something went terribly wrong." << std::endl;
+    }
 
     return EXIT_SUCCESS;
 }
-
-//Module['arguments'] = ["1", "2", "5", "6"]
-//Module.callMain()
-//Module.callMain(["1", "5", "5"])
-//Module.noInitialRun = false
-//    --pre-js "pre-js.js" \
 

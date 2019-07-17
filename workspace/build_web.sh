@@ -13,6 +13,7 @@ emcc \
     -I"${PRIVATE_HEADER_DIR}" \
     -std=c++1z \
     -o output.html \
+    -s DISABLE_EXCEPTION_CATCHING=0 \
     --pre-js "${WEBSRC_ROOT_DIR}/pre-js.js" \
     --post-js "${WEBSRC_ROOT_DIR}/post-js.js" \
     -DBUILD_WEB
