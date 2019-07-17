@@ -327,7 +327,7 @@ int main(int argc, char **argv)
     }
     catch (std::exception)
     {
-        std::cerr << "fatal error: something went terribly wrong." << std::endl;
+        std::cerr << "fatal error: please contact the software vendor" << std::endl;
     }
 
     return EXIT_SUCCESS;
