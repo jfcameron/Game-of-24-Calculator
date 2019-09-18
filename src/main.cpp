@@ -176,7 +176,7 @@ std::vector<std::string> calculateSolutions(const input_type targetNumber, input
 
     do
     {
-        const auto s(input.size());
+        //const auto s(input.size());
         
         for (const auto &operations : operation_permutations)
         {
@@ -197,7 +197,7 @@ std::vector<std::string> calculateSolutions(const input_type targetNumber, input
                     auto order = current_order_of_operations[i] - deletionOffset;
                     
                     if (order < 0) order = 0;
-                    else if (order >= input_copy.size() - 1) order = input_copy.size() - 1;
+                    else if (static_cast<size_t>(order) >= input_copy.size() - 1) order = input_copy.size() - 1;
                     
                     ss << input_copy[order] << Operation_ToString(operations[i]) << input_copy[order + 1] << ": ";
 
@@ -276,7 +276,7 @@ int main(int argc, char **argv)
                 {
                     input.push_back(std::stod(param));
                 }
-                catch (std::invalid_argument)
+                catch (const std::invalid_argument &)
                 {
                     std::cerr << "input contains invalid parameter: \"" << param << "\". All inputs must be integer or floating point numbers" << std::endl;
 
@@ -335,4 +335,3 @@ int main(int argc, char **argv)
 
     return EXIT_SUCCESS;
 }
-
